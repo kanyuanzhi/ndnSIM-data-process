@@ -55,14 +55,14 @@ def readRateFile(rate_file_lines):
 
 if __name__ == "__main__":
     start_index = 21
-    end_index = 180
-    rate_files = readFileName("rate")
+    end_index = 80
+    rate_files = readFileName("load-publish-rate-change")
     index_array = []
     rate_array = []
     line_parameter = ['cx--', 'mo:', 'kp-.', 'r+-']
     average_rate = []
     for rate_file in rate_files:
-        result = readRateFile(readTXT("./rate/" + rate_file))
+        result = readRateFile(readTXT("./load-publish-rate-change/" + rate_file))
         index_array = result[0]
         rate_array.append(result[1])
         average_rate.append(
@@ -87,9 +87,10 @@ if __name__ == "__main__":
     keys = dic.keys()
     keys.sort()
     value_sorted = map(dic.get, keys)
-    plt.bar(list(range(len(keys))),value_sorted,tick_label=keys)
+    # plt.bar(list(range(len(keys))),value_sorted,tick_label=keys)
+    plt.plot(keys, value_sorted, 'cx--')
     # plt.plot(index_array, rate_array[0], label=rate_files[0])
     # plt.plot(index_array, rate_array[1], label=rate_files[1])
     # plt.plot(index_array, rate_array[2], label=rate_files[2])
-    #plt.legend()
-    #plt.show()
+    plt.legend()
+    plt.show()

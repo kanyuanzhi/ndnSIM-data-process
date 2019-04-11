@@ -53,17 +53,19 @@ def readRateFile(rate_file_lines):
 
     return [index_array, data_packet_array]
 
+
 def getDict(rates):
     start_index = 21
-    end_index = 180
-    rate_files = readFileName("request-rate", rates)
+    end_index = 80
+    rate_files = readFileName("load-request-rate-change", rates)
     print rate_files
     index_array = []
     rate_array = []
     # line_parameter = ['cx--', 'mo:', 'kp-.', 'r+-']
     average_rate = []
     for rate_file in rate_files:
-        result = readRateFile(readTXT("./request-rate/" + rate_file))
+        result = readRateFile(
+            readTXT("./load-request-rate-change/" + rate_file))
         index_array = result[0]
         rate_array.append(result[1])
         average_rate.append(
@@ -74,7 +76,7 @@ def getDict(rates):
 
     dict_index = []
     dict_value = []
-    
+
     for i in range(0, len(rate_files)):
         dict_index.append(int(rate_files[i].split('-')[4].split('.')[0]))
         dict_value.append(average_rate[i])
@@ -82,6 +84,8 @@ def getDict(rates):
     keys = dic.keys()
     keys.sort()
     value_sorted = map(dic.get, keys)
+    print keys
+    print value_sorted
     return [keys, value_sorted]
 
 
@@ -90,12 +94,17 @@ if __name__ == "__main__":
     keys_normal = dict_normal[0]
     values_normal = dict_normal[1]
 
+    dict_5 = getDict('5')
+    keys_5 = dict_5[0]
+    values_5 = dict_5[1]
+
     dict_10 = getDict('10')
     keys_10 = dict_10[0]
     values_10 = dict_10[1]
     # plt.bar(list(range(len(keys))),value_sorted,tick_label=keys)
-    plt.plot(keys_normal,values_normal,'cx--', label='normal')
-    plt.plot(keys_10,values_10,'mo:', label='10')
+    plt.plot(keys_normal, values_normal, 'cx--', label='normal')
+    plt.plot(keys_5, values_5, 'kp-.', label='5')
+    plt.plot(keys_10, values_10, 'mo:', label='10')
     # plt.plot(index_array, rate_array[0], label=rate_files[0])
     # plt.plot(index_array, rate_array[1], label=rate_files[1])
     # plt.plot(index_array, rate_array[2], label=rate_files[2])
