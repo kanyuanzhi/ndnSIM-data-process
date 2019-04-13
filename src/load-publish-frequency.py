@@ -6,7 +6,23 @@ import os
 def readFileName(path):
     names = []
     for name in os.listdir("./" + path):
-        if "rate" in name:
+        if "rate" in name and name.split('-')[0] != "freshness" and name.split('-')[2] != "normal":
+            names.append(name)
+    return names
+
+
+def readNormalFileName(path):
+    names = []
+    for name in os.listdir("./" + path):
+        if name.split('-')[2] == "normal":
+            names.append(name)
+    return names
+
+
+def readFreshnessFileName(path):
+    names = []
+    for name in os.listdir("./" + path):
+        if "rate" in name and name.split('-')[0] == "freshness":
             names.append(name)
     return names
 
@@ -39,56 +55,92 @@ def readRateFile(rate_file_lines):
     for i in range(1, len(rate_file_lines)):
         line = rate_file_lines[i].split("\t")
         if int(line[0]) == current_index and line[1] == "root":
-            if "netDeviceFace" in line[3] and line[4] == "OutData":
-                data_packet_rate = data_packet_rate + float(line[7])
+            if "appFace" in line[3] and line[4] == "InData":
+                data_packet_array.append(float(line[7]))
         elif int(line[0]) != current_index and line[1] == "root":
             index_array.append(current_index)
             current_index = int(line[0])
-            data_packet_array.append(data_packet_rate)
-            data_packet_rate = 0
-
     index_array.append(current_index)
-    data_packet_array.append(data_packet_rate)
+
+
+
+    #     if int(line[0]) == current_index and line[1] == "root":
+    #         if "netDeviceFace" in line[3] and line[4] == "OutData":
+    #             data_packet_rate = data_packet_rate + float(line[7])
+    #     elif int(line[0]) != current_index and line[1] == "root":
+    #         index_array.append(current_index)
+    #         current_index = int(line[0])
+    #         data_packet_array.append(data_packet_rate)
+    #         data_packet_rate = 0
+
+    # index_array.append(current_index)
+    # data_packet_array.append(data_packet_rate)
 
     return [index_array, data_packet_array]
 
 
-if __name__ == "__main__":
+def getDict(flag):
     start_index = 21
     end_index = 80
-    rate_files = readFileName("load-publish-rate-change")
+    if flag == "kan":
+        rate_files = readFileName("load-publish-rate-change")
+    if flag == "freshness":
+        rate_files = readFreshnessFileName("load-publish-rate-change")
+    if flag == "normal":
+        rate_files = readNormalFileName("load-publish-rate-change")
     index_array = []
     rate_array = []
-    line_parameter = ['cx--', 'mo:', 'kp-.', 'r+-']
+    # line_parameter = ['cx--', 'mo:', 'kp-.', 'r+-']
     average_rate = []
     for rate_file in rate_files:
-        result = readRateFile(readTXT("./load-publish-rate-change/" + rate_file))
+        result = readRateFile(
+            readTXT("./load-publish-rate-change/" + rate_file))
         index_array = result[0]
         rate_array.append(result[1])
         average_rate.append(
             float(sum(result[1][start_index-1:end_index]))/(end_index-start_index+1))
-        # plt.plot(index_array, result[1], line_parameter[rate_files.index(
-        #     rate_file)], label=rate_file)
-        # plt.plot(index_array, result[1], label=rate_file)
-    print rate_files
-    print average_rate
 
     dict_index = []
     dict_value = []
+
+    if flag == "normal":
+        return [0, average_rate]
+    else:
+        for i in range(0, len(rate_files)):
+            if flag == "freshness":
+                dict_index.append(float(rate_files[i].split('-')[3]))
+            else:
+                dict_index.append(float(rate_files[i].split('-')[2]))
+            dict_value.append(average_rate[i])
+        dic = dict(zip(dict_index, dict_value))
+        keys = dic.keys()
+        keys.sort()
+        value_sorted = map(dic.get, keys)
+        print value_sorted
+
+        return [keys, value_sorted]
+
+
+if __name__ == "__main__":
     
-    for i in range(0, len(rate_files)):
-        if rate_files[i].split('-')[2] == "normal":
-            dict_index.append(0)
-        else:
-            dict_index.append(int(rate_files[i].split('-')[2]))
-        dict_value.append(average_rate[i])
-    dic = dict(zip(dict_index, dict_value))
-    print dic
-    keys = dic.keys()
-    keys.sort()
-    value_sorted = map(dic.get, keys)
+
+    dict_kan = getDict("kan")
+    keys_kan = dict_kan[0]
+    values_kan = dict_kan[1]
+
+    dict_freshness = getDict("freshness")
+    keys_freshness = dict_freshness[0]
+    values_freshness = dict_freshness[1]
+
+    dict_normal = getDict("normal")
+    keys_normal = keys_kan[:]
+    values_normal = dict_normal[1]*len(keys_normal)
+    
+
     # plt.bar(list(range(len(keys))),value_sorted,tick_label=keys)
-    plt.plot(keys, value_sorted, 'cx--')
+    plt.plot(keys_kan, values_kan, 'cx--', label='kan')
+    plt.plot(keys_freshness, values_freshness, 'kp-.', label='freshness')
+    plt.plot(keys_normal, values_normal, 'mo:', label='normal')
     # plt.plot(index_array, rate_array[0], label=rate_files[0])
     # plt.plot(index_array, rate_array[1], label=rate_files[1])
     # plt.plot(index_array, rate_array[2], label=rate_files[2])

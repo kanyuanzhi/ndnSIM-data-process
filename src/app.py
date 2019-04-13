@@ -46,8 +46,8 @@ class Torus:
         for node in nodes:
             G.add_node(node, comment="NA", yPos=self.__n -
                        int(node/self.__n), xPos=node % self.__n+1)
-        G.add_edges_from(edges, bandwidth="1Mbps",
-                         metric="1", delay="10ms", queue="10")
+        G.add_edges_from(edges, bandwidth="10Mbps",
+                         metric="1", delay="0ms", queue="100")
         return G
 
     def save_to_txt(self):
@@ -56,7 +56,7 @@ class Torus:
         string = "router\n"
         for node in nodes:
             string = string + str(node[0]) + " " + node[1]["comment"] + \
-                " " + str(node[1]["yPos"]) + " " + str(node[1]["xPos"]) + "\n"
+                " " + str(node[1]["yPos"]*10) + " " + str(node[1]["xPos"]*10) + "\n"
         string = string + "\nlink\n"
 
         for edge in edges:
@@ -73,15 +73,14 @@ class Torus:
 if __name__ == "__main__":
     gg = nx.Graph()
     gg.edges()
-    T = Torus(10)
+    T = Torus(5)
     G = T.torus
 
     nx.draw(G)
     path = nx.shortest_path(G)
-    print path[0][99]
 
     #print G.edges(data=True)
     #print T.torus_with_properties.edges(data=True)
 
-    #T.save_to_txt()
+    T.save_to_txt()
     #plt.show()
