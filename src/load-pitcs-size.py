@@ -28,7 +28,7 @@ def sortData(index, rate):
 if __name__ == "__main__":
     start_index = 21
     end_index = 80
-    parameter = 'pitcs-size'
+    parameter = 'subpub-pitcs-size'
     file_names = readFileNames(parameter)
     normal_index = []
     normal_rate = []
