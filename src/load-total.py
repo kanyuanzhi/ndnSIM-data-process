@@ -51,6 +51,7 @@ if __name__ == "__main__":
         index_array.append(current_index)
         rate = float(
             sum(data_packet_array[start_index-1:end_index]))/(end_index-start_index+1)
+        print sum(data_packet_array[start_index-1:end_index])
         subpub_index.append(round(float(name[7].split('.')[0]), 1))
         subpub_rate.append(rate)
 
