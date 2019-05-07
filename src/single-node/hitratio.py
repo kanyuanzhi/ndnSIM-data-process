@@ -1,4 +1,6 @@
 import math
+import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
 
@@ -188,4 +190,4 @@ if __name__ == "__main__":
     # sca = SCA(content_amount, cache_size, p_dict)
     # ratio = sca.hitRatio()
     
-    print sca_validation.totalHitRatio()
+    print (sca_validation.totalHitRatio())

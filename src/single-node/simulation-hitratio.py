@@ -40,13 +40,13 @@ if __name__ == "__main__":
                     miss_count[index] = 1.0
                 else:
                     miss_count[index] = miss_count[index] + 1
-    print nodes
+    print (nodes)
     for i in range(len(nodes)):
         hit_ratio[i] = hit_count[i] / (hit_count[i] + miss_count[i])
     
     for i in range(len(nodes)):
         hit_ratio[i] = hit_count[i] / (hit_count[i] + miss_count[i])
-        print hit_ratio[i]
+        print (hit_ratio[i])
 
 
 

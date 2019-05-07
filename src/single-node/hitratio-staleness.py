@@ -197,7 +197,7 @@ if __name__ == "__main__":
     total_ratio = sca.totalHitRatio()
 
     for i in range(5, 121, 5):
-        print i
+        print (i)
         index.append(i)
         data.append(total_ratio)
         sca_validation = SCAValidationEx(
