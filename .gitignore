@@ -1,4 +1,9 @@
 .vscode
 venv
 *.out
-*.txt
+cs-trace.txt
+
+cs-data
+new-cs-data
+new-rate-data
+rate-data
