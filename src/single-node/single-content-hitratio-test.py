@@ -1,4 +1,6 @@
 import math
+import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
 
@@ -260,7 +262,7 @@ if __name__ == "__main__":
     for j in range(1, content_amount+1):
         temp_validation = temp_validation + ratio_validation[j]*p_dict[j]
         # temp = temp + ratio[j]*p_dict[j]
-    print temp_validation
+    print (temp_validation)
 
     plt.plot(index, hitratio_model.values(), label="model")
     plt.plot(index, hitratio_validation_model.values(),

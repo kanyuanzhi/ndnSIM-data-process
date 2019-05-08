@@ -8,22 +8,21 @@ def readTXT(txt):
     return lines
 
 
-
 if __name__ == "__main__":
     lines = readTXT("./src/abilene/abilene60.out")
 
     nodes = []
     hit_ratio = {}
     hit_count = {}
-    miss_count ={}
+    miss_count = {}
 
     for line in lines:
         item = line.split(' ')
         time = item[0]
         if "[DEBUG]" in line and float(time.strip('s')) > 20:
-        # if index_str != "-1" and "onContentStoreHit" in line and "/prefix" in line:
+            # if index_str != "-1" and "onContentStoreHit" in line and "/prefix" in line:
             if "STATICFLAG" in line and "hit_count" in line:
-                index = int(item[item.index("hit_count")+1])
+                index = int(item[item.index("hit_count") + 1])
                 if index not in nodes:
                     nodes.append(index)
                     hit_count[index] = 1.0
@@ -33,23 +32,17 @@ if __name__ == "__main__":
             # if index_str != "-1" and "onContentStoreMiss" in line and "/prefix" in line:
             #     index = int(index_str)
             if "STATICFLAG" in line and "miss_count" in line:
-                index = int(item[item.index("miss_count")+1])
+                index = int(item[item.index("miss_count") + 1])
                 if index not in nodes:
                     nodes.append(index)
                     hit_count[index] = 0.0
                     miss_count[index] = 1.0
                 else:
                     miss_count[index] = miss_count[index] + 1
-    print nodes
+    print(nodes)
     for i in range(len(nodes)):
         hit_ratio[i] = hit_count[i] / (hit_count[i] + miss_count[i])
-        print hit_ratio[i]
-
-
-
-
-
-    
+        print(hit_ratio[i])
 
     # user_nodes = readTopology("test-tree.txt")
     # user_nodes = [0]

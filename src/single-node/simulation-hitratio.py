@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.use('TkAgg')
 import sys
 
 

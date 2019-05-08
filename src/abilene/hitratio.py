@@ -1,271 +1,28 @@
-import math
+import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
-
-class Zipf(object):
-    # calucate the popularity of the contents
-    def __init__(self, amount, z):
-        self._amount = amount
-        self._z = z
-        self._factor = self._normalization()
-
-    def _normalization(self):
-        factor = 0.0
-        for i in range(1, self._amount + 1):
-            factor = factor + math.pow(1.0/i, self._z)
-        return 1/factor
-
-    def popularity(self):
-        popularity_dict = {}
-        for i in range(1, self._amount + 1):
-            # popularity_dict[self._amount + 1 - i] = self._factor/math.pow(i, self._z)
-            popularity_dict[i] = self._factor/math.pow(i, self._z)
-        return popularity_dict
+from mcav.zipf import Zipf
+from mcav.mcav import MCAV
+from mcav.mca import MCA
 
 
-class SCA(object):
-    # realize the SCA algorithm
-    def __init__(self, amount, size, popurity_dict):
-        self._amount = amount
-        self._size = size
-        self._alpha = popurity_dict
-        self._P = {}
-        self._P[1] = self._alpha
-        self._B = {}
-
-    def hitRatio(self):
-        for i in range(1, self._size + 1):
-            self._computeB(i)
-            i = i + 1
-            if i <= self._size:
-                self._computeP(i)
-        return self._B[self._size]
-
-    def _computeP(self, position):
-        # position starts from 2
-        p = {}
-        molecule = []
-        denominator = 0.0
-        for i in range(1, self._amount + 1):
-            denominator = denominator + \
-                self._nonNegative(
-                    self._alpha[i] * (1 - self._B[position-1][i]))
-        for i in range(1, self._amount + 1):
-            molecule.append(self._nonNegative(
-                self._alpha[i] * (1 - self._B[position-1][i])))
-            p[i] = molecule[i-1] / denominator
-        self._P[position] = p
-        # print p
-        # print sum(p.values())
-        # print "-----=------"
-
-    def _computeB(self, position):
-        # position starts from 1
-        b = {}
-        for i in range(1, self._amount + 1):
-            b[i] = 0.0
-            for j in range(1, position + 1):
-                b[i] = b[i] + self._P[j][i]
-        self._B[position] = b
-
-    def _nonNegative(self, number):
-        if number > 0:
-            return number
-        else:
-            return 0.0
-
-
-class SCAValidationEx(object):
-    # realize the SCA algorithm
-    def __init__(self, amount, size, popularity_dict, rate, time):
-        self._amount = amount
-        self._size = size
-        self._alpha = popularity_dict
-        self._P = {}
-        # self._P[1] = self._alpha
-        self._B = {}
-        self._request_rate = rate
-        self._staleness_time = time
-        self._validation_rate = self._validationRate()
-        self._validation_probability = self._validationProbability()
-        self._P[1] = self._computeP1()
-
-    def hitRatio(self):
-        for i in range(1, self._size + 1):
-            self._computeB(i)
-            i = i + 1
-            if i <= self._size:
-                self._computeP(i)
-        return self._B[self._size]
-
-    def _computeP(self, position):
-        # position starts from 2
-        p = {}
-        molecule = []
-        denominator = 0.0
-        for i in range(1, self._amount + 1):
-            denominator = denominator + \
-                self._nonNegative(
-                    self._alpha[i] * (1 - self._B[position-1][i]))
-        for i in range(1, self._amount + 1):
-            molecule.append(self._nonNegative(
-                self._alpha[i] * (1 - self._B[position-1][i])))
-            p[i] = self._validation_probability[i] * molecule[i-1] / denominator
-        self._P[position] = p
-        # print p
-        # print sum(p.values())
-        # print "-----=------"
-
-    def _computeB(self, position):
-        # position starts from 1
-        b = {}
-        for i in range(1, self._amount + 1):
-            b[i] = 0.0
-            for j in range(1, position + 1):
-                b[i] = b[i] + self._P[j][i]
-        self._B[position] = b
-
-    def _nonNegative(self, number):
-        if number > 0:
-            return number
-        else:
-            return 0.0
-
-    def _validationProbability(self):
-        vp = {}
-        for i in range(1, self._amount + 1):
-            vp[i] = 1 - math.pow(math.e, - self._alpha[i]
-                                 * self._validation_rate * self._staleness_time)
-        # print vp
-        return vp
-
-    # def _validationRate(self):
-    #     validation_rate = self._request_rate * \
-    #         (1 - math.pow(math.e, - self._request_rate*self._staleness_time / self._size))
-    #     return validation_rate
-    
-    def _validationRate(self):
-        validation_rate = self._request_rate *  math.pow(math.e, - self._size/self._staleness_time/self._request_rate )
-        return validation_rate
-
-    # def _validationRate(self):
-    #     validation_rate = self._request_rate * self._staleness_time*self._request_rate/self._size *  math.pow(math.e, - self._size/self._staleness_time/self._request_rate )
-    #     return validation_rate
-
-    def _computeP1(self):
-        P1 = {}
-        for i in range(1, self._amount + 1):
-            P1[i] = self._alpha[i] * self._validation_probability[i]
-        return P1
-        
 def saveToTxt(data):
-    with open ('./src/line/hitratio-staleness-data.txt','w') as f:
+    with open('./src/line/hitratio-staleness-data.txt', 'w') as f:
         for i in range(len(data)):
-            f.write(str(data[i])+'\n')
+            f.write(str(data[i]) + '\n')
 
 
-class MCA(object):
-    # realize the MCA algorithm
-    def __init__(self, amount, size, popularity_dict, rate, time, miss_rate={}):
-        self._amount = amount
-        self._size = size
-        self._popularity = popularity_dict
-        self._staleness_time = time
-        self._rate = rate   # a number
-        self._miss_rate = miss_rate # a dict
-
-        self._total_rate = self._totalRate()
-        self._request_probability = self._requestProbability()
-        self._sca_validation = SCAValidationEx(amount, size, self._request_probability, sum(self._total_rate.values()), time)
-        self._sca = SCA(amount, size, self._request_probability)
-        self._hit_ratio = self._sca_validation.hitRatio()
-        self._hit_ratio_sca = self._sca.hitRatio()
-
-    def hitRatio(self):
-        return self._hit_ratio
-
-    def totaHitRatio(self):
-        h = 0
-        for i in range(1, self._amount + 1):
-            h = h + self._request_probability[i] * self._hit_ratio[i]
-        return h
-
-    def outRate(self):
-        m = {}
-        for i in range(1, self._amount + 1):
-            m[i] = self._total_rate[i] * (1 - self._hit_ratio[i])
-        return m
-
-    def _totalRate(self):
-        r = {}
-        if self._miss_rate:
-            for i in range(1, self._amount + 1):
-                r[i] = self._rate * self._popularity[i] + self._miss_rate[i]
-        else:
-            for i in range(1, self._amount + 1):
-                r[i] = self._rate * self._popularity[i]
-        return r
-
-    def _requestProbability(self):
-        p = {}
-        for i in range(1, self._amount + 1):
-            p[i] = self._total_rate[i] / sum(self._total_rate.values())
-        return p
-
-class MCANormal(object):
-    # realize the MCA algorithm
-    def __init__(self, amount, size, popularity_dict, rate, miss_rate={}):
-        self._amount = amount
-        self._size = size
-        self._popularity = popularity_dict
-        self._rate = rate   # a number
-        self._miss_rate = miss_rate # a dict
-
-        self._total_rate = self._totalRate()
-        self._request_probability = self._requestProbability()
-        self._sca = SCA(amount, size, self._request_probability)
-        self._hit_ratio = self._sca.hitRatio()
-
-    def hitRatio(self):
-        return self._hit_ratio
-
-    def totaHitRatio(self):
-        h = 0
-        for i in range(1, self._amount + 1):
-            h = h + self._request_probability[i] * self._hit_ratio[i]
-        return h
-
-    def outRate(self):
-        m = {}
-        for i in range(1, self._amount + 1):
-            m[i] = self._total_rate[i] * (1 - self._hit_ratio[i])
-        return m
-
-    def _totalRate(self):
-        r = {}
-        if self._miss_rate:
-            for i in range(1, self._amount + 1):
-                r[i] = self._rate * self._popularity[i] + self._miss_rate[i]
-        else:
-            for i in range(1, self._amount + 1):
-                r[i] = self._rate * self._popularity[i]
-        return r
-
-    def _requestProbability(self):
-        p = {}
-        for i in range(1, self._amount + 1):
-            p[i] = self._total_rate[i] / sum(self._total_rate.values())
-        return p
-
-def outMerge(amount, *outs):
-    size = len(outs[0])
-    out_merge = {}
-    for i in range(1, amount+1):
+def missMerge(amount, *misses):
+    size = len(misses[0])
+    miss_merge = {}
+    for i in range(1, amount + 1):
         temp = 0.0
-        for j in range(len(outs)):
-            temp = temp + outs[j][i]
-        out_merge[i] = temp
-    return out_merge
+        for j in range(len(misses)):
+            temp = temp + misses[j][i]
+        miss_merge[i] = temp
+    return miss_merge
+
 
 if __name__ == "__main__":
     content_amount = 1000
@@ -297,71 +54,82 @@ if __name__ == "__main__":
     # print "有效性要求的命中率： ", temp2
 
     # mca = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time)
-    # mca_out_rate = mca.outRate()
-    # print "node0: ", mca.totaHitRatio()
+    # mca_miss_rate = mca.missRate()
+    # print "node0: ", mca.totalHitRatio()
     # for i in range(3):
-    #     mca = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time, mca_out_rate)
-    #     mca_out_rate = mca.outRate()
-    #     print "node"+str(i+1), mca.totaHitRatio()
+    #     mca = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time, mca_miss_rate)
+    #     mca_miss_rate = mca.missRate()
+    #     print "node"+str(i+1), mca.totalHitRatio()
 
     # print "###############"
-    
+
     # mca = MCANormal(content_amount, cache_size, p_dict, request_rate)
-    # mca_out_rate = mca.outRate()
-    # print "node0: ", mca.totaHitRatio()
+    # mca_miss_rate = mca.missRate()
+    # print "node0: ", mca.totalHitRatio()
     # for i in range(3):
-    #     mca = MCANormal(content_amount, cache_size, p_dict, request_rate, mca_out_rate)
-    #     mca_out_rate = mca.outRate()
-    #     print "node"+str(i+1), mca.totaHitRatio()
-    mca2 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time)
-    mca2_out_rate = mca2.outRate()
-    print "node2: ", mca2.totaHitRatio()
+    #     mca = MCANormal(content_amount, cache_size, p_dict, request_rate, mca_miss_rate)
+    #     mca_miss_rate = mca.missRate()
+    #     print "node"+str(i+1), mca.totalHitRatio()
+    mca2 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time)
+    mca2_miss_rate = mca2.missRate()
+    print("node2: ", mca2.totalHitRatio())
 
-    mca3 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time)
-    mca3_out_rate = mca3.outRate()
-    print "node3: ", mca3.totaHitRatio()
+    mca3 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time)
+    mca3_miss_rate = mca3.missRate()
+    print("node3: ", mca3.totalHitRatio())
 
-    mca4 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time)
-    mca4_out_rate = mca4.outRate()
-    print "node4: ", mca4.totaHitRatio()
+    mca4 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time)
+    mca4_miss_rate = mca4.missRate()
+    print("node4: ", mca4.totalHitRatio())
 
-    mca7 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time)
-    mca7_out_rate = mca7.outRate()
-    print "node7: ", mca7.totaHitRatio()
+    mca7 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time)
+    mca7_miss_rate = mca7.missRate()
+    print("node7: ", mca7.totalHitRatio())
 
-    mca8 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time)
-    mca8_out_rate = mca8.outRate()
-    print "node8: ", mca8.totaHitRatio()
- 
-    mca6 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time, mca7_out_rate)
-    mca6_out_rate = mca6.outRate()
-    print "node6: ", mca6.totaHitRatio()
+    mca8 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time)
+    mca8_miss_rate = mca8.missRate()
+    print("node8: ", mca8.totalHitRatio())
 
-    mca9 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time, mca8_out_rate)
-    mca9_out_rate = mca9.outRate()
-    print "node9: ", mca9.totaHitRatio()
+    mca6 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time, mca7_miss_rate)
+    mca6_miss_rate = mca6.missRate()
+    print("node6: ", mca6.totalHitRatio())
 
-    mca23_out_rate = outMerge(content_amount, mca2_out_rate, mca3_out_rate)
-    mca1 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time, mca23_out_rate)
-    mca1_out_rate = mca1.outRate()
-    print "node1: ", mca1.totaHitRatio()
+    mca9 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time, mca8_miss_rate)
+    mca9_miss_rate = mca9.missRate()
+    print("node9: ", mca9.totalHitRatio())
 
-    mca46_out_rate = outMerge(content_amount, mca4_out_rate, mca6_out_rate)
-    mca5 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time, mca46_out_rate)
-    mca5_out_rate = mca5.outRate()
-    print "node5: ", mca5.totaHitRatio()
+    mca23_miss_rate = missMerge(content_amount, mca2_miss_rate, mca3_miss_rate)
+    mca1 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time, mca23_miss_rate)
+    mca1_miss_rate = mca1.missRate()
+    print("node1: ", mca1.totalHitRatio())
 
-    mca10 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time, mca9_out_rate)
-    mca10_out_rate = mca10.outRate()
-    print "node10: ", mca10.totaHitRatio()
+    mca46_miss_rate = missMerge(content_amount, mca4_miss_rate, mca6_miss_rate)
+    mca5 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time, mca46_miss_rate)
+    mca5_miss_rate = mca5.missRate()
+    print("node5: ", mca5.totalHitRatio())
 
-    mca1510_out_rate = outMerge(content_amount, mca1_out_rate, mca5_out_rate, mca10_out_rate)
-    mca0 = MCA(content_amount, cache_size, p_dict, request_rate, staleness_time, mca1510_out_rate)
-    mca0_out_rate = mca0.outRate()
-    print "node0: ", mca0.totaHitRatio()
+    mca10 = MCAV(content_amount, cache_size, p_dict, request_rate,
+                staleness_time, mca9_miss_rate)
+    mca10_miss_rate = mca10.missRate()
+    print("node10: ", mca10.totalHitRatio())
+
+    mca1510_miss_rate = missMerge(content_amount, mca1_miss_rate,
+                                  mca5_miss_rate, mca10_miss_rate)
+    mca0 = MCAV(content_amount, cache_size, p_dict, request_rate,
+               staleness_time, mca1510_miss_rate)
+    mca0_miss_rate = mca0.missRate()
+    print("node0: ", mca0.totalHitRatio())
 
     ##########
-    
 
     # single_rate = {}
     # for i in range(1, content_amount + 1):
