@@ -9,40 +9,21 @@ def readTXT(txt):
 
 
 if __name__ == "__main__":
-    lines = readTXT("./src/abilene/abilene20.out")
+    lines = readTXT("./src/abilene/abilene120.out")
 
     nodes = []
-    hit_ratio = {}
-    hit_count = {}
-    miss_count = {}
+    count = 0.0
 
     for line in lines:
         item = line.split(' ')
         time = item[0]
         if "[DEBUG]" in line and float(time.strip('s')) > 20:
             # if index_str != "-1" and "onContentStoreHit" in line and "/prefix" in line:
-            if "STATICFLAG" in line and "hit_count" in line:
-                index = int(item[item.index("hit_count") + 1])
-                if index not in nodes:
-                    nodes.append(index)
-                    hit_count[index] = 1.0
-                    miss_count[index] = 0.0
-                else:
-                    hit_count[index] = hit_count[index] + 1
-            # if index_str != "-1" and "onContentStoreMiss" in line and "/prefix" in line:
-            #     index = int(index_str)
-            if "STATICFLAG" in line and "miss_count" in line:
-                index = int(item[item.index("miss_count") + 1])
-                if index not in nodes:
-                    nodes.append(index)
-                    hit_count[index] = 0.0
-                    miss_count[index] = 1.0
-                else:
-                    miss_count[index] = miss_count[index] + 1
-    print(nodes)
-    for i in range(len(nodes)):
-        hit_ratio[i] = hit_count[i] / (hit_count[i] + miss_count[i])
-        print(round(hit_ratio[i],5))
+            node = item[1]
+            if "nfd.Forwarder:onOutgoingInterest():" in line and node == "0":
+                count = count + 1
+        
+    print(round(count/980,5))
 
     # user_nodes = readTopology("test-tree.txt")
     # user_nodes = [0]

@@ -1,4 +1,4 @@
-from sca import SCA
+from .sca import SCA
 
 class MCA(object):
     # realize the MCA algorithm

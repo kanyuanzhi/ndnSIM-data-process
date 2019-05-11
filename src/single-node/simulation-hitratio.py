@@ -12,7 +12,7 @@ def readTXT(txt):
 
 
 if __name__ == "__main__":
-    lines = readTXT("./src/single-node/single40.out")
+    lines = readTXT("./src/single-node/single2.out")
 
     nodes = []
     hit_ratio = {}

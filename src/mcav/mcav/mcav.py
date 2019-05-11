@@ -1,4 +1,4 @@
-from scav import SCAV
+from .scav import SCAV
 
 class MCAV(object):
     # realize the MCA algorithm

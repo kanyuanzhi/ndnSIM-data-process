@@ -71,19 +71,23 @@ class SCAV(object):
     def _validationProbability(self):
         vp = {}
         for i in range(1, self._amount + 1):
-            vp[i] = 1 - math.pow(math.e, - self._alpha[i]
-                                 * self._validation_rate * self._staleness_time)
+            vp[i] = 1 - math.pow(math.e, -self._validation_rate[i] * self._staleness_time)
         return vp
 
     # def _validationRate(self):
-    #     validation_rate = self._request_rate * \
-    #         (1 - math.pow(math.e, - self._staleness_time / self._size))
+    #     validation_rate = self._request_rate
     #     return validation_rate
 
     def _validationRate(self):
-        validation_rate = self._request_rate * \
-            math.pow(math.e, - self._size /
-                     self._staleness_time/self._request_rate)
+        validation_rate = {}
+        for i in range(1, self._amount+1):
+            i_request_rate = self._alpha[i]*self._request_rate*0.1
+            validation_rate[i] = i_request_rate
+            # validation_rate[i] = i_request_rate*math.pow(math.e, -self._size/(self._request_rate*self._staleness_time))
+
+        # validation_rate = self._request_rate * \
+        #     math.pow(math.e, - self._size /
+        #              self._staleness_time/self._request_rate)
         return validation_rate
 
     def _computeP1(self):

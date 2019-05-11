@@ -6,8 +6,8 @@ if __name__ == "__main__":
     content_amount = 1000
     cache_size = 100
     request_rate = 10.0
-    staleness_time = 40
-    z = 0.8  # zipf parameter
+    staleness_time = 3
+    z = 0.8 # zipf parameter
     zipf = Zipf(content_amount, z)
     p_dict = zipf.popularity()  # popularity of the contents
 
