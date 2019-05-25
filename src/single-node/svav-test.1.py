@@ -1,12 +1,13 @@
-import math
+from mcav.zipf import Zipf
+from math import e, pow
 
 
 class SCAV(object):
     # realize the SCA algorithm
-    def __init__(self, amount, size, popurity_dict, rate, time):
+    def __init__(self, amount, size, popularity, rate, time):
         self._amount = amount
         self._size = size
-        self._alpha = popurity_dict
+        self._alpha = popularity
         self._P = {}
         # self._P[1] = self._alpha
         self._B = {}
@@ -22,7 +23,7 @@ class SCAV(object):
 
     def totalHitRatio(self):
         total_hit_ratio = 0.0
-        for i in range(1, self._amount+1):
+        for i in range(1, self._amount + 1):
             total_hit_ratio = total_hit_ratio + \
                 self._alpha[i]*self._B[self._size][i]
         return total_hit_ratio
@@ -44,9 +45,10 @@ class SCAV(object):
                 self._nonNegative(
                     self._alpha[i] * (1 - self._B[position-1][i]))
         for i in range(1, self._amount + 1):
-            molecule = self._nonNegative(
-                self._alpha[i] * (1 - self._B[position-1][i]))
-            p[i] = self._validation_probability[i] * molecule / denominator
+            molecule = self._nonNegative(self._alpha[i] *
+                                         (1 - self._B[position - 1][i]))
+            p[i] = self._validation_probability[i][
+                position] * molecule / denominator
 
         self._P[position] = p
         # print p
@@ -69,29 +71,43 @@ class SCAV(object):
             return 0.0
 
     def _validationProbability(self):
-        vp = {}
+        VP = {}
         for i in range(1, self._amount + 1):
-            vp[i] = 1 - math.pow(math.e, -self._validation_rate[i] * self._staleness_time)
-        return vp
-
-    # def _validationRate(self):
-    #     validation_rate = self._request_rate
-    #     return validation_rate
+            vp = {}
+            for j in range(1, self._size + 1):
+                # vp[j] = 1 - pow(
+                #     e, -self._validation_rate[i] * self._staleness_time *
+                #     (1 - pow(e, -(j - 1))))
+                vp[j] = 1 - pow(
+                    e, -self._validation_rate[i] * self._staleness_time * j /
+                    self._size)
+            VP[i] = vp
+        return VP
 
     def _validationRate(self):
         validation_rate = {}
-        for i in range(1, self._amount+1):
-            i_request_rate = self._alpha[i]*self._request_rate
+        for i in range(1, self._amount + 1):
+            i_request_rate = self._alpha[i] * self._request_rate
             validation_rate[i] = i_request_rate
-            # validation_rate[i] = i_request_rate*math.pow(math.e, -self._size/(self._request_rate*self._staleness_time))
-
-        # validation_rate = self._request_rate * \
-        #     math.pow(math.e, - self._size /
-        #              self._staleness_time/self._request_rate)
         return validation_rate
 
     def _computeP1(self):
         P1 = {}
         for i in range(1, self._amount + 1):
-            P1[i] = self._alpha[i] * self._validation_probability[i]
+            P1[i] = self._alpha[i] * self._validation_probability[i][1]
         return P1
+
+
+if __name__ == "__main__":
+    content_amount = 1000
+    cache_size = 20
+    request_rate = 10
+    staleness_time = 20
+    z = 0.8  # zipf parameter
+    zipf = Zipf(content_amount, z)
+    p_dict = zipf.popularity()  # popularity of the contents
+    scav = SCAV(content_amount, cache_size, p_dict, request_rate,
+                staleness_time)
+
+    # print(scav.hitRatio())
+    print(scav.totalHitRatio())

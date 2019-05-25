@@ -7,7 +7,7 @@ from mcav.mcav import MCAV
 
 if __name__ == "__main__":
     content_amount = 1000
-    cache_size = 100
+    cache_size = 200
     request_rate = 10.0
     staleness_time = 20
     z = 0.8  # zipf parameter
