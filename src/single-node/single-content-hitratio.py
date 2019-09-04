@@ -4,6 +4,8 @@ mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from mcav.sca import SCA
 from mcav.zipf import Zipf
+
+
 # from mcav.scav import SCAV
 class SCAV(object):
     # realize the SCA algorithm
@@ -19,6 +21,7 @@ class SCAV(object):
         self._validation_rate = self._validationRate()
         self._validation_probability = self._validationProbability()
         self._P[1] = self._computeP1()
+        self._original_hit_ratio = {}
         self._hitRatio()
 
     def hitRatio(self):
@@ -37,6 +40,10 @@ class SCAV(object):
             i = i + 1
             if i <= self._size:
                 self._computeP(i)
+        for i in range(1, self._amount + 1):
+            self._original_hit_ratio[i] = self._B[self._size][i]
+            self._B[self._size][i] = self._B[self._size][i] * self._validation_probability[i]
+
 
     def _computeP(self, position):
         # position starts from 2
@@ -50,7 +57,8 @@ class SCAV(object):
         for i in range(1, self._amount + 1):
             molecule = self._nonNegative(self._alpha[i] *
                                          (1 - self._B[position - 1][i]))
-            p[i] = self._validation_probability[i][position] * molecule / denominator
+            # p[i] = self._validation_probability[i] * molecule / denominator
+            p[i] =  molecule / denominator
 
         self._P[position] = p
         # print p
@@ -72,31 +80,42 @@ class SCAV(object):
         else:
             return 0.0
 
+    # def _validationProbability(self):
+    #     VP = {}
+    #     for i in range(1, self._amount + 1):
+    #         vp = {}
+    #         for j in range(1, self._size + 1):
+    #             vp[j] = 1 - pow(
+    #                 e, -self._validation_rate[i] * self._staleness_time *
+    #                 (1 - pow(e, -(j - 1))))
+    #             # vp[j] = 1-pow(e,-self._validation_rate[i]*self._staleness_time*j/self._size)
+    #         VP[i] = vp
+    #     return VP
+
     def _validationProbability(self):
-        VP = {}
+        vp = {}
         for i in range(1, self._amount + 1):
-            vp = {}
-            for j in range(1, self._size + 1):
-                vp[j] = 1 - pow(
-                    e, -self._validation_rate[i] * self._staleness_time *
-                    (1 - pow(e, -(j - 1))))
-                # vp[j] = 1-pow(e,-self._validation_rate[i]*self._staleness_time*j/self._size)
-            VP[i] = vp
-        return VP
+            vp[i] = self._staleness_time * self._validation_rate[i] / (
+                self._staleness_time * self._validation_rate[i] + 1)
+            # vp = {}
+            # for j in range(1, self._size + 1):
+            #     vp[j] = 1 - pow(
+            #         e, -self._validation_rate[i] * self._staleness_time *
+            #         (1 - pow(e, -(j - 1))))
+            #     # vp[j] = 1-pow(e,-self._validation_rate[i]*self._staleness_time*j/self._size)
+        return vp
 
     def _validationRate(self):
         validation_rate = {}
         for i in range(1, self._amount + 1):
-            i_request_rate = self._alpha[i] * self._request_rate
-            validation_rate[i] = i_request_rate
+            validation_rate[i] = self._alpha[i] * self._request_rate
         return validation_rate
 
     def _computeP1(self):
         P1 = {}
         for i in range(1, self._amount + 1):
-            P1[i] = self._alpha[i] * self._validation_probability[i][1]
+            P1[i] = self._alpha[i] * self._validation_probability[i]
         return P1
-
 
 
 if __name__ == "__main__":
@@ -105,32 +124,34 @@ if __name__ == "__main__":
     request_rate = 10.0
     staleness_time = 5
     z = 0.8  # zipf parameter
-    zipf = Zipf(content_amount, z) 
+    zipf = Zipf(content_amount, z)
     p_dict = zipf.popularity()  # popularity of the contents
 
     seq_dict = {}
     name_dict = {}
-    f = open("./src/single-node/out.log", "r")
+    f = open("./src/single-node/out2.log", "r")
     lines = f.readlines()
     for line in lines:
         # line = line.strip('\n')
         item = line.split(' ')
         if "ndn.ConsumerZipfMandelbrotKan:SendPacket(): [INFO ]" in line:
             index = item.index('for')
-            seq = int(item[index+1])
-            name = item[len(item)-1]
+            seq = int(item[index + 1])
+            name = item[len(item) - 1]
             if "prefix" in name:
                 seq_dict[seq] = name
                 name_dict[name] = seq
     #print name_dict
 
-    # scav = SCAV(
-    #     content_amount, cache_size, p_dict, request_rate, staleness_time)
-    # ratio_validation = scav.hitRatio()
+    scav = SCAV(content_amount, cache_size, p_dict, request_rate,
+                staleness_time)
+    ratio_validation = scav.hitRatio()
 
-    sca = SCA(content_amount, cache_size, p_dict)
-    ratio_validation = sca.hitRatio()
-    print (sum(ratio_validation.values()))
+    print(scav._validation_probability[1])
+
+    # sca = SCA(content_amount, cache_size, p_dict)
+    # ratio_validation = sca.hitRatio()
+    print(sum(ratio_validation.values()))
     hitratio_sim = {}
     hitratio_model = {}
     hitcount = {}
@@ -155,6 +176,7 @@ if __name__ == "__main__":
                 else:
                     misscount[seq] = misscount[seq] + 1
     # print hitcount
+    orignal_hitratio_model = {}
     for i in range(1, 51):
         index.append(i)
         if not i in hitcount:
@@ -162,9 +184,10 @@ if __name__ == "__main__":
         if not i in misscount:
             misscount[i] = 0
         if hitcount[i] + misscount[i] == 0:
-             hitratio_sim[i] = 0
+            hitratio_sim[i] = 0
         else:
             hitratio_sim[i] = hitcount[i] / (hitcount[i] + misscount[i])
+        orignal_hitratio_model[i] = scav._original_hit_ratio[i]
         hitratio_model[i] = ratio_validation[i]
 
     # for i in range(1, 51):
@@ -180,8 +203,9 @@ if __name__ == "__main__":
     #     hitratio_sim[i] = hitcount / (hitcount + misscount)
     #     hitratio_theory[i] = ratio_validation[i]
     # print hitcount
-    print (hitratio_sim)
-    print (hitratio_model)
+    print(hitratio_sim)
+    print(hitratio_model)
+    print(orignal_hitratio_model)
 
     plt.plot(index, list(hitratio_model.values()), label="model")
     plt.plot(index, list(hitratio_sim.values()), "+", label="simulation")

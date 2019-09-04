@@ -14,9 +14,10 @@ class SCA(object):
 
     def totalHitRatio(self):
         total_hit_ratio = 0.0
-        for i in range(1, self._amount+1):
-            total_hit_ratio = total_hit_ratio + self._alpha[i]*self._B[self._size][i]
-        return total_hit_ratio 
+        for i in range(1, self._amount + 1):
+            total_hit_ratio = total_hit_ratio + self._alpha[i] * self._B[
+                self._size][i]
+        return total_hit_ratio
 
     def _hitRatio(self):
         for i in range(1, self._size + 1):
@@ -31,13 +32,12 @@ class SCA(object):
         molecule = []
         denominator = 0.0
         for i in range(1, self._amount + 1):
-            denominator = denominator + \
-                self._nonNegative(
-                    self._alpha[i] * (1 - self._B[position-1][i]))
+            denominator = denominator + self._nonNegative(
+                self._alpha[i] * (1 - self._B[position - 1][i]))
         for i in range(1, self._amount + 1):
-            molecule.append(self._nonNegative(
-                self._alpha[i] * (1 - self._B[position-1][i])))
-            p[i] = molecule[i-1] / denominator
+            molecule = self._nonNegative(self._alpha[i] *
+                                         (1 - self._B[position - 1][i]))
+            p[i] = molecule / denominator
         self._P[position] = p
         # print p
         # print sum(p.values())
